@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acupressure PDF Guide</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 10px; background: #f2f2f2; }
+    h1 { text-align: center; font-size: 24px; }
+    input, button { padding: 10px; font-size: 16px; width: 100%; margin-top: 10px; box-sizing: border-box; }
+    .pdf-slot { background: white; padding: 10px; border: 1px solid #ccc; margin-top: 10px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <h1>📘 Acupressure PDF Guide</h1>
+  <input type="text" id="search" placeholder="Search PDF by title..." />
+  <button onclick="startVoice()">🎤 Voice Search</button>
+
+  <div id="slots"></div>
+
+  <hr>
+  <h3>Add New PDF</h3>
+  <input type="file" id="pdfFile" accept="application/pdf">
+  <input type="text" id="pdfTitle" placeholder="Enter PDF title">
+  <button onclick="addPdf()">Add PDF</button>
+
+  <script>
+    let pdfs = JSON.parse(localStorage.getItem("pdfs") || "[]");
+
+    function renderList() {
+      const container = document.getElementById("slots");
+      container.innerHTML = "";
+      pdfs.forEach((pdf) => {
+        const div = document.createElement("div");
+        div.className = "pdf-slot";
+        div.innerHTML = `
+          <strong>${pdf.title}</strong><br>
+          <a href="${pdf.url}" target="_blank">📂 Open PDF</a>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addPdf() {
+      const fileInput = document.getElementById("pdfFile");
+      const titleInput = document.getElementById("pdfTitle");
+      const file = fileInput.files[0];
+      const title = titleInput.value;
+
+      if (file && title) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          pdfs.push({ title, url: e.target.result });
+          localStorage.setItem("pdfs", JSON.stringify(pdfs));
+          renderList();
+          fileInput.value = "";
+          titleInput.value = "";
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert("Please upload a PDF and enter a title.");
+      }
+    }
+
+    document.getElementById("search").addEventListener("input", function () {
+      const query = this.value.toLowerCase();
+      const container = document.getElementById("slots");
+      container.innerHTML = "";
+      pdfs.filter(pdf => pdf.title.toLowerCase().includes(query)).forEach(pdf => {
+        const div = document.createElement("div");
+        div.className = "pdf-slot";
+        div.innerHTML = `<strong>${pdf.title}</strong><br><a href="${pdf.url}" target="_blank">📂 Open PDF</a>`;
+        container.appendChild(div);
+      });
+    });
+
+    function startVoice() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-IN';
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        document.getElementById("search").value = transcript;
+        document.getElementById("search").dispatchEvent(new Event("input"));
+      };
+      recognition.start();
+    }
+
+    renderList();
+  </script>
+
+</body>
+</html>
